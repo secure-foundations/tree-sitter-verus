@@ -25,9 +25,10 @@ const PREC = {
   comparative: 4,
   and: 3,
   or: 2,
-  range: 1,
-  assign: 0,
-  closure: -1,
+  logical: 1, // Logical connectives in Verus
+  range: 0,
+  assign: -1,
+  closure: -2,
 };
 
 const numericTypes = [
@@ -55,7 +56,22 @@ const TOKEN_TREE_NON_SPECIAL_PUNCTUATION = [
   '..', '...', '..=', ',', ';', ':', '::', '->', '=>', '#', '?',
 ];
 
+// Verus specific operators
+const VERUS_OPERATORS = [
+  // '&&&', '|||',
+  '<==>', '==>', '<==', '===', '=~=', '=~~=', '!==',
+];
+
 const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
+
+// Verus specific primitives
+const verusPrimitiveTypes = ['int', 'nat'];
+
+// A marker for Verus-only constructs
+// Currently this is just identity
+function $verus(rule) {
+  return rule;
+}
 
 const grammarOptions = {
   name: 'rust',
@@ -110,11 +126,33 @@ const grammarOptions = {
     [$.array_expression],
     [$.visibility_modifier],
     [$.visibility_modifier, $.scoped_identifier, $.scoped_type_identifier],
+
+    // Situations like
+    // fn foo(x: int) requires x > 0, { ... }
+    [$.requires_clause],
+    [$.ensures_clause],
+    [$.recommends_clause],
+    [$.decreases_clause],
+
+    // e.g. loop invariant x == 0, { ... } { ... }
+    [$.invariant_clause],
+    [$.invariant_ensures_clause],
+    [$.invariant_except_break_clause],
+
+    // e.g. assert forall |x:int| assert(false) by { .. }
+    [$.assert_expression, $.assert_by_block_expression],
+
+    // TODO: Investigate
+    // [$.scoped_identifier],
+    // [$.matches_pattern, $.range_pattern],
+    // [$.matches_pattern, $.tuple_struct_pattern],
+    // [$.scoped_identifier, $.scoped_type_identifier, $._pattern],
+    // [$.remaining_field_pattern, $.range_pattern],
   ],
 
   word: $ => $.identifier,
 
-  rules: parametric(["rust", "verus"], mode => ({
+  rules: {
     source_file: $ => seq(
       optional($.shebang),
       repeat($._statement),
@@ -123,7 +161,7 @@ const grammarOptions = {
     _statement: $ => choice(
       prec(1, $.verus_block),
       $.expression_statement,
-      $._declaration_statement$(mode),
+      $._declaration_statement,
     ),
 
     empty_statement: _ => ';',
@@ -146,7 +184,7 @@ const grammarOptions = {
       $.union_item,
       $.enum_item,
       $.type_item,
-      $.function_item$(mode),
+      $.function_item,
       $.function_signature_item,
       $.impl_item,
       $.trait_item,
@@ -155,6 +193,12 @@ const grammarOptions = {
       $.use_declaration,
       $.extern_crate_declaration,
       $.static_item,
+
+      // Additional constructs in Verus
+      $.broadcast_group,
+      $.broadcast_use,
+      $.global_item,
+      $.assume_specification_item,
     ),
 
     // Section - Macro definitions
@@ -237,11 +281,21 @@ const grammarOptions = {
     _non_special_token: $ => choice(
       $._literal, $.identifier, $.mutable_specifier, $.self, $.super, $.crate,
       alias(choice(...primitiveTypes), $.primitive_type),
+      $verus(alias(choice(...verusPrimitiveTypes), $.primitive_type)),
+      prec(1, choice(...$verus(VERUS_OPERATORS))),
       prec.right(repeat1(choice(...TOKEN_TREE_NON_SPECIAL_PUNCTUATION))),
       '\'',
       'as', 'async', 'await', 'break', 'const', 'continue', 'default', 'enum', 'fn', 'for', 'gen',
       'if', 'impl', 'let', 'loop', 'match', 'mod', 'pub', 'return', 'static', 'struct', 'trait',
       'type', 'union', 'unsafe', 'use', 'where', 'while',
+      ...$verus([
+        'spec', 'proof', 'exec', 'ghost', 'tracked', 'requires', 'ensures', 'returns',
+        'decreases', 'invariant', 'invariant_ensures', 'invariant_except_break',
+        'recommends', 'via', 'when', 'opens_invariants', 'by', 'forall', 'exists',
+        'choose', 'any', 'none', 'auto', 'broadcast', 'group', 'no_unwind',
+        'assume_specification', 'assert', 'assume', 'calc', 'closed', 'open',
+        'trigger', 'seq',
+      ]),
     ),
 
     // Section - Declarations
@@ -261,12 +315,19 @@ const grammarOptions = {
       ']',
     ),
 
-    attribute: $ => seq(
-      $._path,
-      optional(choice(
-        seq('=', field('value', $._expression)),
-        field('arguments', alias($.delim_token_tree, $.token_tree)),
-      )),
+    attribute: $ => choice(
+      // Verus trigger attribute
+      $verus(prec(1, seq(
+        'trigger',
+        optional($._expression),
+      ))),
+      seq(
+        $._path,
+        optional(choice(
+          seq('=', field('value', $._expression)),
+          field('arguments', alias($.delim_token_tree, $.token_tree)),
+        )),
+      ),
     ),
 
     mod_item: $ => seq(
@@ -294,8 +355,86 @@ const grammarOptions = {
       '}',
     ),
 
+    // Verus - broadcast group declaration
+    broadcast_group: $ => seq(
+      optional($.visibility_modifier),
+      'broadcast',
+      'group',
+      field('name', $.identifier),
+      field('members', $.broadcast_group_list),
+    ),
+
+    broadcast_group_list: $ => seq(
+      '{',
+      sepBy(',', seq(repeat($.attribute_item), $._path)),
+      optional(','),
+      '}',
+    ),
+
+    // Verus - broadcast use declaration
+    broadcast_use: $ => seq(
+      'broadcast',
+      'use',
+      sepBy1(',', $._path),
+      optional(','),
+      ';',
+    ),
+
+    // Verus - global item (size_of, layout)
+    global_item: $ => seq(
+      // repeat($.attribute_item),
+      'global',
+      choice(
+        $.global_sizeof,
+        $.global_layout,
+      ),
+      ';',
+    ),
+
+    global_sizeof: $ => seq(
+      'size_of',
+      $._type,
+      '==',
+      $._expression,
+    ),
+
+    global_layout: $ => seq(
+      'layout',
+      $._type,
+      'is',
+      $.identifier,
+      '==',
+      $._literal,
+      optional(seq(',', $.identifier, '==', $._literal)),
+    ),
+
+    // In Verus, the return type can be annotated with a name
+    // for ensures clauses
+    return_type: $ => choice(
+      $._type,
+      seq(
+        '(', $.identifier, ':', $._type, ')',
+      ),
+    ),
+
+    // Verus - assume specification
+    assume_specification_item: $ => seq(
+      optional($.visibility_modifier),
+      'assume_specification',
+      optional($.type_parameters),
+      '[',
+      field('target', $._path),
+      ']',
+      field('parameters', $.parameters),
+      optional(seq('->', field('return_type', $.return_type))),
+      optional($.where_clause),
+      optional($.fn_qualifier),
+      ';',
+    ),
+
     struct_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.data_mode)),
       'struct',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
@@ -315,6 +454,7 @@ const grammarOptions = {
 
     union_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.data_mode)),
       'union',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
@@ -324,6 +464,7 @@ const grammarOptions = {
 
     enum_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.data_mode)),
       'enum',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
@@ -360,6 +501,7 @@ const grammarOptions = {
 
     field_declaration: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.data_mode)),
       field('name', $._field_identifier),
       ':',
       field('type', $._type),
@@ -370,6 +512,7 @@ const grammarOptions = {
       sepBy(',', seq(
         repeat($.attribute_item),
         optional($.visibility_modifier),
+        $verus(optional($.data_mode)),
         field('type', $._type),
       )),
       optional(','),
@@ -390,6 +533,8 @@ const grammarOptions = {
 
     const_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.publish)),
+      $verus(optional($.function_mode)),
       'const',
       field('name', $.identifier),
       ':',
@@ -400,11 +545,13 @@ const grammarOptions = {
           field('value', $._expression),
         ),
       ),
+      $verus(optional($.fn_qualifier)),
       ';',
     ),
 
     static_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.function_mode)),
       'static',
 
       // Not actual rust syntax, but made popular by the lazy_static crate.
@@ -418,6 +565,7 @@ const grammarOptions = {
         '=',
         field('value', $._expression),
       )),
+      $verus(optional($.fn_qualifier)),
       ';',
     ),
 
@@ -437,30 +585,61 @@ const grammarOptions = {
       'spec',
       'proof',
       'exec',
+      seq('spec', '(', 'checked', ')'),
     ),
+
+    publish: $ => choice(
+      'closed',
+      'open',
+    ),
+
+    data_mode: $ => choice(
+      'ghost',
+      'tracked',
+    ),
+
+    // Verus fn_qualifier - used in function declarations, function signatures, closures, etc.
+    fn_qualifier: $ => repeat1(choice(
+      $.requires_clause,
+      $.recommends_clause,
+      $.ensures_clause,
+      $.returns_clause,
+      $.decreases_clause,
+      $.opens_invariants_clause,
+      $.no_unwind_clause,
+    )),
 
     function_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.publish)),
       optional($.function_modifiers),
-      ...mode === 'verus' ? [optional($.function_mode)] : [],
+      $verus(optional($.function_mode)),
+      $verus(optional('broadcast')),
       'fn',
       field('name', choice($.identifier, $.metavariable)),
       field('type_parameters', optional($.type_parameters)),
       field('parameters', $.parameters),
-      optional(seq('->', field('return_type', $._type))),
+      optional(seq('->', field('return_type', $.return_type))),
       optional($.where_clause),
+      $verus(optional($.prover)),
+      $verus(optional($.fn_qualifier)),
       field('body', $.block),
     ),
 
     function_signature_item: $ => seq(
       optional($.visibility_modifier),
+      $verus(optional($.publish)),
       optional($.function_modifiers),
+      $verus(optional($.function_mode)),
+      $verus(optional('broadcast')),
       'fn',
       field('name', choice($.identifier, $.metavariable)),
       field('type_parameters', optional($.type_parameters)),
       field('parameters', $.parameters),
-      optional(seq('->', field('return_type', $._type))),
+      optional(seq('->', field('return_type', $.return_type))),
       optional($.where_clause),
+      $verus(optional($.prover)),
+      $verus(optional($.fn_qualifier)),
       ';',
     ),
 
@@ -491,7 +670,7 @@ const grammarOptions = {
         $.tuple_type,
         $.array_type,
         $.higher_ranked_trait_bound,
-        alias(choice(...primitiveTypes), $.primitive_type),
+        alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.primitive_type),
       )),
       field('bounds', $.trait_bounds),
     ),
@@ -517,6 +696,7 @@ const grammarOptions = {
     trait_item: $ => seq(
       optional($.visibility_modifier),
       optional('unsafe'),
+      optional('auto'),
       'trait',
       field('name', $._type_identifier),
       field('type_parameters', optional($.type_parameters)),
@@ -607,6 +787,8 @@ const grammarOptions = {
 
     let_declaration: $ => seq(
       'let',
+      $verus(optional('ghost')),
+      $verus(optional('tracked')),
       optional($.mutable_specifier),
       field('pattern', $._pattern),
       optional(seq(
@@ -669,6 +851,7 @@ const grammarOptions = {
       '(',
       sepBy(',', seq(
         optional($.attribute_item),
+        $verus(optional('tracked')),
         choice(
           $.parameter,
           $.self_parameter,
@@ -747,7 +930,7 @@ const grammarOptions = {
       $.dynamic_type,
       $.bounded_type,
       $.removed_trait_bound,
-      alias(choice(...primitiveTypes), $.primitive_type),
+      alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.primitive_type),
     ),
 
     bracketed_type: $ => seq(
@@ -940,7 +1123,7 @@ const grammarOptions = {
       $.yield_expression,
       $._literal,
       prec.left($.identifier),
-      alias(choice(...primitiveTypes), $.identifier),
+      alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.identifier),
       prec.left($._reserved_identifier),
       $.self,
       $.scoped_identifier,
@@ -959,6 +1142,15 @@ const grammarOptions = {
       $.parenthesized_expression,
       $.struct_expression,
       $._expression_ending_with_block,
+      ...$verus([
+        $.is_expression,
+        $.matches_expression,
+        $.view_expression,
+        $.assert_expression,
+        $.assume_expression,
+        $.assert_forall_expression,
+        $.quantifier_expression,
+      ]),
     ),
 
     _expression: $ => choice(
@@ -978,6 +1170,10 @@ const grammarOptions = {
       $.loop_expression,
       $.for_expression,
       $.const_block,
+      ...$verus([
+        $.proof_block,
+        $.assert_by_block_expression,
+      ]),
     ),
 
     verus_block: $ => seq(
@@ -985,7 +1181,7 @@ const grammarOptions = {
       '!',
       choice(
         // TODO: Allowing only {} for now, but technically should allow () and [] as well.
-        seq('{', repeat($._statement$verus), '}'),
+        seq('{', repeat($._statement), '}'),
       ),
     ),
 
@@ -1073,7 +1269,11 @@ const grammarOptions = {
     )),
 
     binary_expression: $ => {
-      const table = [
+      const table = $verus([
+        [PREC.comparative, choice('===', '=~=', '=~~=', '!==')],
+        // TODO: what is this?
+        // [PREC.logical, choice('<==')],
+      ]).concat([
         [PREC.and, '&&'],
         [PREC.or, '||'],
         [PREC.bitand, '&'],
@@ -1083,15 +1283,29 @@ const grammarOptions = {
         [PREC.shift, choice('<<', '>>')],
         [PREC.additive, choice('+', '-')],
         [PREC.multiplicative, choice('*', '/', '%')],
-      ];
+      ]);
 
       // @ts-ignore
-      return choice(...table.map(([precedence, operator]) => prec.left(precedence, seq(
-        field('left', $._expression),
-        // @ts-ignore
-        field('operator', operator),
-        field('right', $._expression),
-      ))));
+      return choice(
+        $verus(prec.right(PREC.logical, seq(
+          field('left', $._expression),
+          field('operator', '==>'),
+          field('right', $._expression),
+        ))),
+
+        $verus(prec.right(PREC.logical, seq(
+          field('left', $._expression),
+          field('operator', '<==>'),
+          field('right', $._expression),
+        ))),
+
+        ...table.map(([precedence, operator]) => prec.left(precedence, seq(
+          field('left', $._expression),
+          // @ts-ignore
+          field('operator', operator),
+          field('right', $._expression),
+        ))),
+      );
     },
 
     assignment_expression: $ => prec.left(PREC.assign, seq(
@@ -1283,12 +1497,30 @@ const grammarOptions = {
       optional(seq($.label, ':')),
       'while',
       field('condition', $._condition),
+      ...$verus([
+        repeat(choice(
+          $.invariant_clause,
+          $.invariant_ensures_clause,
+          $.invariant_except_break_clause,
+          $.ensures_clause,
+          $.decreases_clause,
+        )),
+      ]),
       field('body', $.block),
     ),
 
     loop_expression: $ => seq(
       optional(seq($.label, ':')),
       'loop',
+      ...$verus([
+        repeat(choice(
+          $.invariant_clause,
+          $.invariant_ensures_clause,
+          $.invariant_except_break_clause,
+          $.ensures_clause,
+          $.decreases_clause,
+        )),
+      ]),
       field('body', $.block),
     ),
 
@@ -1298,6 +1530,16 @@ const grammarOptions = {
       field('pattern', $._pattern),
       'in',
       field('value', $._expression),
+      ...$verus([
+        optional(seq(':', $._expression)),
+        repeat(choice(
+          $.invariant_clause,
+          $.invariant_ensures_clause,
+          $.invariant_except_break_clause,
+          $.ensures_clause,
+          $.decreases_clause,
+        )),
+      ]),
       field('body', $.block),
     ),
 
@@ -1307,12 +1549,15 @@ const grammarOptions = {
     ),
 
     closure_expression: $ => prec(PREC.closure, seq(
+      $verus(optional(seq('for', $.type_parameters))),
       optional('static'),
+      optional('async'),
       optional('move'),
       field('parameters', $.closure_parameters),
       choice(
         seq(
-          optional(seq('->', field('return_type', $._type))),
+          optional(seq('->', field('return_type', $.return_type))),
+          $verus(optional($.fn_qualifier)),
           field('body', $.block),
         ),
         field('body', choice($._expression, '_')),
@@ -1377,15 +1622,190 @@ const grammarOptions = {
       optional(seq($.label, ':')),
       '{',
       repeat($._statement),
-      optional($._expression),
+      optional(choice(
+        $._expression,
+        $.big_and_expression,
+        $.big_or_expression,
+        $.matches_expression_without_body,
+      )),
       '}',
     ),
+
+    // Special handling of Verus &&&/|||
+    // which are only allowed to occur in blocks
+    big_and_expression: $ => seq('&&&',
+      sepBy('&&&', choice($._expression, $.matches_expression_without_body)),
+    ),
+
+    big_or_expression: $ => seq('|||',
+      sepBy('|||', choice($._expression, $.matches_expression_without_body)),
+    ),
+
+    // Verus proof block
+    proof_block: $ => seq(
+      // repeat($.attribute_item),
+      optional(seq($.label, ':')),
+      'proof',
+      $.block,
+    ),
+
+    // Verus specific clauses
+    requires_clause: $ => seq(
+      'requires',
+      sepBy1(',', $._expression),
+      optional(','),
+    ),
+
+    ensures_clause: $ => seq(
+      'ensures',
+      sepBy1(',', $._expression),
+      optional(','),
+    ),
+
+    returns_clause: $ => seq(
+      'returns',
+      $._expression,
+      optional(','),
+    ),
+
+    recommends_clause: $ => seq(
+      'recommends',
+      sepBy1(',', $._expression),
+      optional(seq('via', $._expression)),
+      optional(','),
+    ),
+
+    decreases_clause: $ => seq(
+      'decreases',
+      sepBy1(',', $._expression),
+      optional(seq('when', $._expression)),
+      optional(seq('via', $._expression)),
+      optional(','),
+    ),
+
+    invariant_clause: $ => seq(
+      'invariant',
+      sepBy1(',', $._expression),
+      optional(','),
+    ),
+
+    invariant_ensures_clause: $ => seq(
+      'invariant_ensures',
+      sepBy1(',', $._expression),
+      optional(','),
+    ),
+
+    invariant_except_break_clause: $ => seq(
+      'invariant_except_break',
+      sepBy1(',', $._expression),
+      optional(','),
+    ),
+
+    opens_invariants_clause: $ => seq(
+      'opens_invariants',
+      choice(
+        'any',
+        'none',
+        seq('[', sepBy(',', $._expression), ']'),
+      ),
+    ),
+
+    no_unwind_clause: $ => seq(
+      'no_unwind',
+      optional(seq('when', $._expression)),
+    ),
+
+    is_expression: $ => prec.left(PREC.cast, seq(
+      field('value', $._expression),
+      'is',
+      // TODO: is this too restrictive?
+      field('variant', $.identifier),
+    )),
+
+    matches_expression_without_body: $ => prec.left(PREC.cast, seq(
+      field('value', $._expression),
+      'matches',
+      field('pattern', $._pattern),
+    )),
+
+    matches_expression: $ => prec.left(PREC.comparative, seq(
+        field('matches', $.matches_expression_without_body),
+        choice(
+          seq('==>', field('body', $._expression)),
+          seq('&&', field('body', $._expression)),
+        ),
+    )),
+
+    view_expression: $ => prec.left(PREC.cast, seq(
+      field('value', $._expression),
+      '@',
+    )),
+
+    // Verus assert/assume expressions
+    assert_expression: $ => seq(
+      // repeat($.attribute_item),
+      'assert',
+      '(',
+      $._expression,
+      ')',
+    ),
+
+    assume_expression: $ => seq(
+      // repeat($.attribute_item),
+      'assume',
+      '(',
+      $._expression,
+      ')',
+    ),
+
+    // Verus assert by block
+    prover: $ => seq(
+      'by',
+      optional(seq('(', $.identifier, ')')),
+    ),
+
+    assert_by_block_expression: $ => seq(
+      // repeat($.attribute_item),
+      'assert',
+      '(',
+      $._expression,
+      ')',
+      $.prover,
+      optional($.requires_clause),
+      $.block,
+    ),
+
+    // Verus assert forall
+    assert_forall_expression: $ => seq(
+      // repeat($.attribute_item),
+      'assert',
+      'forall',
+      $.closure_expression,
+      optional(seq('implies', $._expression)),
+      'by',
+      $.block,
+    ),
+
+    // Verus quantifier expressions
+    quantifier_expression: $ => prec(PREC.closure, seq(
+      // repeat($.attribute_item),
+      choice('forall', 'exists', 'choice'),
+      $.closure_parameters,
+      repeat($.inner_attribute_item),
+      choice(
+        seq(
+          optional(seq('->', field('return_type', $._type))),
+          field('body', $.block),
+        ),
+        field('body', choice($._expression, '_')),
+      ),
+    )),
 
     // Section - Patterns
 
     _pattern: $ => choice(
       $._literal_pattern,
-      alias(choice(...primitiveTypes), $.identifier),
+      alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.identifier),
       $.identifier,
       $.scoped_identifier,
       $.generic_pattern,
@@ -1405,6 +1825,18 @@ const grammarOptions = {
       $.macro_invocation,
       '_',
     ),
+
+    // matches_pattern: $ => choice(
+    //   $._literal_pattern,
+    //   alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.identifier),
+    //   $.identifier,
+    //   $.scoped_identifier,
+    //   $.generic_pattern,
+    //   $.tuple_pattern,
+    //   $.tuple_struct_pattern,
+    //   $.struct_pattern,
+    //   '_',
+    // ),
 
     generic_pattern: $ => seq(
       choice(
@@ -1550,7 +1982,7 @@ const grammarOptions = {
         /0b[01_]+/,
         /0o[0-7_]+/,
       ),
-      optional(choice(...numericTypes)),
+      optional(choice(...numericTypes, ...$verus(verusPrimitiveTypes))),
     )),
 
     string_literal: $ => seq(
@@ -1649,7 +2081,7 @@ const grammarOptions = {
 
     _path: $ => choice(
       $.self,
-      alias(choice(...primitiveTypes), $.identifier),
+      alias(choice(...primitiveTypes, ...$verus(verusPrimitiveTypes)), $.identifier),
       $.metavariable,
       $.super,
       $.crate,
@@ -1676,7 +2108,7 @@ const grammarOptions = {
     crate: _ => 'crate',
 
     metavariable: _ => /\$[a-zA-Z_]\w*/,
-  })),
+  },
 };
 
 module.exports = grammar(grammarOptions);
@@ -1709,7 +2141,7 @@ function sepBy(sep, rule) {
 /**
  * Makes the given rules parametric in an argument
  * ranging over values in `options`.
- * It essentially makes |options| copies of the rules,
+ * It essentially makes |options| copies of the rules,
  * each with the unique prefix of "$<option>".
  *
  * For each rule <rule>, the default rule name <rule>
