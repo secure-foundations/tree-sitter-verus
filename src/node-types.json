@@ -118,15 +118,7 @@
         "named": true
       },
       {
-        "type": "assert_by_block_expression",
-        "named": true
-      },
-      {
         "type": "assert_expression",
-        "named": true
-      },
-      {
-        "type": "assert_forall_expression",
         "named": true
       },
       {
@@ -650,6 +642,29 @@
   },
   {
     "type": "assert_by_block_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "prover",
+          "named": true
+        },
+        {
+          "type": "requires_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "assert_by_expression",
     "named": true,
     "fields": {},
     "children": {
@@ -1418,15 +1433,7 @@
             "named": true
           },
           {
-            "type": "assert_by_block_expression",
-            "named": true
-          },
-          {
             "type": "assert_expression",
-            "named": true
-          },
-          {
-            "type": "assert_forall_expression",
             "named": true
           },
           {
@@ -2151,6 +2158,18 @@
       "types": [
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "assert_by_block_expression",
+          "named": true
+        },
+        {
+          "type": "assert_by_expression",
+          "named": true
+        },
+        {
+          "type": "assert_forall_expression",
           "named": true
         }
       ]
@@ -3167,6 +3186,10 @@
         {
           "type": "_expression",
           "named": true
+        },
+        {
+          "type": "attribute_item",
+          "named": true
         }
       ]
     }
@@ -4050,7 +4073,7 @@
     "fields": {},
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
           "type": "identifier",

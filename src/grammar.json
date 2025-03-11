@@ -75,6 +75,27 @@
             "type": "SYMBOL",
             "name": "_expression_ending_with_block"
           }
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "assert_by_expression"
+            },
+            {
+              "type": "STRING",
+              "value": ";"
+            }
+          ]
+        },
+        {
+          "type": "SYMBOL",
+          "name": "assert_by_block_expression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "assert_forall_expression"
         }
       ]
     },
@@ -3333,8 +3354,17 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "prover"
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "by"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "prover"
+                }
+              ]
             },
             {
               "type": "BLANK"
@@ -3512,8 +3542,17 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "prover"
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "by"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "prover"
+                }
+              ]
             },
             {
               "type": "BLANK"
@@ -6503,7 +6542,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "matches_expression"
+          "name": "matches_expression_without_body"
         },
         {
           "type": "SYMBOL",
@@ -6516,10 +6555,6 @@
         {
           "type": "SYMBOL",
           "name": "assume_expression"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "assert_forall_expression"
         },
         {
           "type": "SYMBOL",
@@ -6590,10 +6625,6 @@
         {
           "type": "SYMBOL",
           "name": "proof_block"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "assert_by_block_expression"
         }
       ]
     },
@@ -9293,6 +9324,13 @@
         "type": "SEQ",
         "members": [
           {
+            "type": "REPEAT",
+            "content": {
+              "type": "SYMBOL",
+              "name": "attribute_item"
+            }
+          },
+          {
             "type": "SYMBOL",
             "name": "_expression"
           },
@@ -10360,27 +10398,51 @@
       "members": [
         {
           "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "SYMBOL",
+          "name": "identifier"
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        }
+      ]
+    },
+    "assert_by_expression": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "assert"
+        },
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_expression"
+        },
+        {
+          "type": "STRING",
+          "value": ")"
+        },
+        {
+          "type": "STRING",
           "value": "by"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "prover"
         },
         {
           "type": "CHOICE",
           "members": [
             {
-              "type": "SEQ",
-              "members": [
-                {
-                  "type": "STRING",
-                  "value": "("
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "identifier"
-                },
-                {
-                  "type": "STRING",
-                  "value": ")"
-                }
-              ]
+              "type": "SYMBOL",
+              "name": "requires_clause"
             },
             {
               "type": "BLANK"
@@ -10409,8 +10471,20 @@
           "value": ")"
         },
         {
-          "type": "SYMBOL",
-          "name": "prover"
+          "type": "STRING",
+          "value": "by"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "prover"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         },
         {
           "type": "CHOICE",
@@ -12192,9 +12266,6 @@
       "tuple_struct_pattern"
     ],
     [
-      "array_expression"
-    ],
-    [
       "visibility_modifier"
     ],
     [
@@ -12224,15 +12295,15 @@
       "invariant_except_break_clause"
     ],
     [
-      "assert_expression",
-      "assert_by_block_expression"
-    ],
-    [
       "_statement",
-      "call_expression"
+      "call_expression",
+      "index_expression"
     ],
     [
       "call_expression"
+    ],
+    [
+      "index_expression"
     ]
   ],
   "precedences": [],

@@ -123,7 +123,7 @@ const grammarOptions = {
     [$.scoped_identifier, $.scoped_type_identifier],
     [$.parameters, $._pattern],
     [$.parameters, $.tuple_struct_pattern],
-    [$.array_expression],
+    // [$.array_expression],
     [$.visibility_modifier],
     [$.visibility_modifier, $.scoped_identifier, $.scoped_type_identifier],
 
@@ -140,12 +140,16 @@ const grammarOptions = {
     [$.invariant_except_break_clause],
 
     // e.g. assert forall |x:int| assert(false) by { .. }
-    [$.assert_expression, $.assert_by_block_expression],
+    // [$.assert_expression, $.assert_by_expression],
 
-    // TODO: Investigate
+    // TODO: Investigate ambiguity with #[trigger]
     // e.g. #[trigger] f(...)
-    [$._statement, $.call_expression],
+    [$._statement, $.call_expression, $.index_expression],
     [$.call_expression],
+    [$.index_expression],
+
+    // [$.assert_by_expression, $.assert_by_block_expression],
+    // [$.assert_by_expression],
 
     // [$.scoped_identifier],
     // [$.matches_pattern, $.range_pattern],
@@ -173,6 +177,14 @@ const grammarOptions = {
     expression_statement: $ => choice(
       seq($._expression, ';'),
       prec(1, $._expression_ending_with_block),
+
+      // TODO: to avoid ambiguity, these are not
+      // parsed as expressions for now
+      ...$verus([
+        seq($.assert_by_expression, ';'),
+        $.assert_by_block_expression,
+        $.assert_forall_expression,
+      ]),
     ),
 
     _declaration_statement: $ => choice(
@@ -625,7 +637,7 @@ const grammarOptions = {
       field('parameters', $.parameters),
       optional(seq('->', field('return_type', $.return_type))),
       optional($.where_clause),
-      $verus(optional($.prover)),
+      $verus(optional(seq('by', $.prover))),
       $verus(optional($.fn_qualifier)),
       field('body', $.block),
     ),
@@ -642,7 +654,7 @@ const grammarOptions = {
       field('parameters', $.parameters),
       optional(seq('->', field('return_type', $.return_type))),
       optional($.where_clause),
-      $verus(optional($.prover)),
+      $verus(optional(seq('by', $.prover))),
       $verus(optional($.fn_qualifier)),
       ';',
     ),
@@ -1152,7 +1164,6 @@ const grammarOptions = {
         $.view_expression,
         $.assert_expression,
         $.assume_expression,
-        $.assert_forall_expression,
         $.quantifier_expression,
       ]),
     ),
@@ -1174,10 +1185,7 @@ const grammarOptions = {
       $.loop_expression,
       $.for_expression,
       $.const_block,
-      ...$verus([
-        $.proof_block,
-        $.assert_by_block_expression,
-      ]),
+      $verus($.proof_block),
     ),
 
     verus_block: $ => seq(
@@ -1584,7 +1592,7 @@ const grammarOptions = {
 
     continue_expression: $ => prec.left(seq('continue', optional($.label))),
 
-    index_expression: $ => prec(PREC.call, seq($._expression, '[', $._expression, ']')),
+    index_expression: $ => prec(PREC.call, seq(repeat($.attribute_item), $._expression, '[', $._expression, ']')),
 
     await_expression: $ => prec(PREC.field, seq(
       $._expression,
@@ -1764,9 +1772,17 @@ const grammarOptions = {
     ),
 
     // Verus assert by block
-    prover: $ => seq(
+    prover: $ => seq('(', $.identifier, ')'),
+
+    assert_by_expression: $ => seq(
+      // repeat($.attribute_item),
+      'assert',
+      '(',
+      $._expression,
+      ')',
       'by',
-      optional(seq('(', $.identifier, ')')),
+      $.prover,
+      optional($.requires_clause),
     ),
 
     assert_by_block_expression: $ => seq(
@@ -1775,7 +1791,8 @@ const grammarOptions = {
       '(',
       $._expression,
       ')',
-      $.prover,
+      'by',
+      optional($.prover),
       optional($.requires_clause),
       $.block,
     ),
