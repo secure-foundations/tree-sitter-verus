@@ -143,6 +143,10 @@ const grammarOptions = {
     [$.assert_expression, $.assert_by_block_expression],
 
     // TODO: Investigate
+    // e.g. #[trigger] f(...)
+    [$._statement, $.call_expression],
+    [$.call_expression],
+
     // [$.scoped_identifier],
     // [$.matches_pattern, $.range_pattern],
     // [$.matches_pattern, $.tuple_struct_pattern],
@@ -1337,6 +1341,7 @@ const grammarOptions = {
     ),
 
     call_expression: $ => prec(PREC.call, seq(
+      repeat($.attribute_item),
       field('function', $._expression_except_range),
       field('arguments', $.arguments),
     )),

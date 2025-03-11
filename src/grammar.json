@@ -7785,6 +7785,13 @@
         "type": "SEQ",
         "members": [
           {
+            "type": "REPEAT",
+            "content": {
+              "type": "SYMBOL",
+              "name": "attribute_item"
+            }
+          },
+          {
             "type": "FIELD",
             "name": "function",
             "content": {
@@ -12219,6 +12226,13 @@
     [
       "assert_expression",
       "assert_by_block_expression"
+    ],
+    [
+      "_statement",
+      "call_expression"
+    ],
+    [
+      "call_expression"
     ]
   ],
   "precedences": [],
