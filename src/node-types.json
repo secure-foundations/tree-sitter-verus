@@ -12,10 +12,6 @@
         "named": true
       },
       {
-        "type": "attribute_item",
-        "named": true
-      },
-      {
         "type": "broadcast_group",
         "named": true
       },
@@ -131,6 +127,10 @@
       },
       {
         "type": "async_block",
+        "named": true
+      },
+      {
+        "type": "attribute_expression",
         "named": true
       },
       {
@@ -606,10 +606,6 @@
         {
           "type": "_expression",
           "named": true
-        },
-        {
-          "type": "attribute_item",
-          "named": true
         }
       ]
     }
@@ -653,6 +649,10 @@
           "named": true
         },
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "prover",
           "named": true
         },
@@ -673,6 +673,10 @@
       "types": [
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         },
         {
@@ -711,6 +715,10 @@
       "types": [
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         }
       ]
@@ -941,6 +949,25 @@
     }
   },
   {
+    "type": "attribute_expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "attribute_item",
     "named": true,
     "fields": {},
@@ -1165,6 +1192,10 @@
         },
         {
           "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         },
         {
@@ -1449,6 +1480,10 @@
             "named": true
           },
           {
+            "type": "attribute_expression",
+            "named": true
+          },
+          {
             "type": "await_expression",
             "named": true
           },
@@ -1610,16 +1645,6 @@
           }
         ]
       }
-    },
-    "children": {
-      "multiple": true,
-      "required": false,
-      "types": [
-        {
-          "type": "attribute_item",
-          "named": true
-        }
-      ]
     }
   },
   {
@@ -2153,7 +2178,7 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": true,
       "types": [
         {
@@ -2170,6 +2195,10 @@
         },
         {
           "type": "assert_forall_expression",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         }
       ]
@@ -3185,10 +3214,6 @@
       "types": [
         {
           "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "attribute_item",
           "named": true
         }
       ]
@@ -4679,6 +4704,10 @@
           "named": true
         },
         {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
           "type": "expression_statement",
           "named": true
         },
@@ -5257,10 +5286,6 @@
       "types": [
         {
           "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "attribute_item",
           "named": true
         }
       ]
@@ -5891,6 +5916,10 @@
       "types": [
         {
           "type": "_declaration_statement",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         },
         {

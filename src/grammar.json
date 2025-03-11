@@ -43,8 +43,20 @@
           "name": "expression_statement"
         },
         {
-          "type": "SYMBOL",
-          "name": "_declaration_statement"
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "attribute_item"
+              }
+            },
+            {
+              "type": "SYMBOL",
+              "name": "_declaration_statement"
+            }
+          ]
         }
       ]
     },
@@ -72,8 +84,20 @@
           "type": "PREC",
           "value": 1,
           "content": {
-            "type": "SYMBOL",
-            "name": "_expression_ending_with_block"
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "REPEAT",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "attribute_item"
+                }
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression_ending_with_block"
+              }
+            ]
           }
         },
         {
@@ -117,10 +141,6 @@
         {
           "type": "SYMBOL",
           "name": "empty_statement"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "attribute_item"
         },
         {
           "type": "SYMBOL",
@@ -6538,11 +6558,15 @@
         },
         {
           "type": "SYMBOL",
+          "name": "attribute_expression"
+        },
+        {
+          "type": "SYMBOL",
           "name": "is_expression"
         },
         {
           "type": "SYMBOL",
-          "name": "matches_expression_without_body"
+          "name": "matches_expression"
         },
         {
           "type": "SYMBOL",
@@ -6627,6 +6651,26 @@
           "name": "proof_block"
         }
       ]
+    },
+    "attribute_expression": {
+      "type": "PREC_RIGHT",
+      "value": 12,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "REPEAT1",
+            "content": {
+              "type": "SYMBOL",
+              "name": "attribute_item"
+            }
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_expression"
+          }
+        ]
+      }
     },
     "verus_block": {
       "type": "SEQ",
@@ -7816,13 +7860,6 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "REPEAT",
-            "content": {
-              "type": "SYMBOL",
-              "name": "attribute_item"
-            }
-          },
-          {
             "type": "FIELD",
             "name": "function",
             "content": {
@@ -7931,13 +7968,6 @@
           "value": "["
         },
         {
-          "type": "REPEAT",
-          "content": {
-            "type": "SYMBOL",
-            "name": "attribute_item"
-          }
-        },
-        {
           "type": "CHOICE",
           "members": [
             {
@@ -7971,20 +8001,8 @@
                       "type": "SEQ",
                       "members": [
                         {
-                          "type": "SEQ",
-                          "members": [
-                            {
-                              "type": "REPEAT",
-                              "content": {
-                                "type": "SYMBOL",
-                                "name": "attribute_item"
-                              }
-                            },
-                            {
-                              "type": "SYMBOL",
-                              "name": "_expression"
-                            }
-                          ]
+                          "type": "SYMBOL",
+                          "name": "_expression"
                         },
                         {
                           "type": "REPEAT",
@@ -7996,20 +8014,8 @@
                                 "value": ","
                               },
                               {
-                                "type": "SEQ",
-                                "members": [
-                                  {
-                                    "type": "REPEAT",
-                                    "content": {
-                                      "type": "SYMBOL",
-                                      "name": "attribute_item"
-                                    }
-                                  },
-                                  {
-                                    "type": "SYMBOL",
-                                    "name": "_expression"
-                                  }
-                                ]
+                                "type": "SYMBOL",
+                                "name": "_expression"
                               }
                             ]
                           }
@@ -8066,13 +8072,6 @@
         {
           "type": "STRING",
           "value": "("
-        },
-        {
-          "type": "REPEAT",
-          "content": {
-            "type": "SYMBOL",
-            "name": "attribute_item"
-          }
         },
         {
           "type": "SEQ",
@@ -9324,13 +9323,6 @@
         "type": "SEQ",
         "members": [
           {
-            "type": "REPEAT",
-            "content": {
-              "type": "SYMBOL",
-              "name": "attribute_item"
-            }
-          },
-          {
             "type": "SYMBOL",
             "name": "_expression"
           },
@@ -10414,6 +10406,13 @@
       "type": "SEQ",
       "members": [
         {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "attribute_item"
+          }
+        },
+        {
           "type": "STRING",
           "value": "assert"
         },
@@ -10454,6 +10453,13 @@
     "assert_by_block_expression": {
       "type": "SEQ",
       "members": [
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "attribute_item"
+          }
+        },
         {
           "type": "STRING",
           "value": "assert"
@@ -10507,6 +10513,13 @@
     "assert_forall_expression": {
       "type": "SEQ",
       "members": [
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "attribute_item"
+          }
+        },
         {
           "type": "STRING",
           "value": "assert"
@@ -12293,17 +12306,6 @@
     ],
     [
       "invariant_except_break_clause"
-    ],
-    [
-      "_statement",
-      "call_expression",
-      "index_expression"
-    ],
-    [
-      "call_expression"
-    ],
-    [
-      "index_expression"
     ]
   ],
   "precedences": [],

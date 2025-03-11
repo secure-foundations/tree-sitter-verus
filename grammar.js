@@ -144,9 +144,9 @@ const grammarOptions = {
 
     // TODO: Investigate ambiguity with #[trigger]
     // e.g. #[trigger] f(...)
-    [$._statement, $.call_expression, $.index_expression],
-    [$.call_expression],
-    [$.index_expression],
+    // [$._statement, $.call_expression, $.index_expression],
+    // [$.call_expression],
+    // [$.index_expression],
 
     // [$.assert_by_expression, $.assert_by_block_expression],
     // [$.assert_by_expression],
@@ -169,17 +169,19 @@ const grammarOptions = {
     _statement: $ => choice(
       prec(1, $.verus_block),
       $.expression_statement,
-      $._declaration_statement,
+      seq(repeat($.attribute_item), $._declaration_statement),
     ),
 
     empty_statement: _ => ';',
 
     expression_statement: $ => choice(
       seq($._expression, ';'),
-      prec(1, $._expression_ending_with_block),
+      prec(1, seq(repeat($.attribute_item), $._expression_ending_with_block)),
 
       // TODO: to avoid ambiguity, these are not
-      // parsed as expressions for now
+      // parsed as expressions for now.
+      // Although this allows assertions at the
+      // top level, which is technically not allowed.
       ...$verus([
         seq($.assert_by_expression, ';'),
         $.assert_by_block_expression,
@@ -192,7 +194,7 @@ const grammarOptions = {
       $.macro_invocation,
       $.macro_definition,
       $.empty_statement,
-      $.attribute_item,
+      // $.attribute_item,
       $.inner_attribute_item,
       $.mod_item,
       $.foreign_mod_item,
@@ -398,7 +400,6 @@ const grammarOptions = {
 
     // Verus - global item (size_of, layout)
     global_item: $ => seq(
-      // repeat($.attribute_item),
       'global',
       choice(
         $.global_sizeof,
@@ -1158,6 +1159,7 @@ const grammarOptions = {
       $.parenthesized_expression,
       $.struct_expression,
       $._expression_ending_with_block,
+      $.attribute_expression,
       ...$verus([
         $.is_expression,
         $.matches_expression,
@@ -1187,6 +1189,12 @@ const grammarOptions = {
       $.const_block,
       $verus($.proof_block),
     ),
+
+    // Attaches an attribute to an expression
+    attribute_expression: $ => prec.right(PREC.unary, seq(
+      repeat1($.attribute_item),
+      $._expression,
+    )),
 
     verus_block: $ => seq(
       'verus',
@@ -1349,7 +1357,6 @@ const grammarOptions = {
     ),
 
     call_expression: $ => prec(PREC.call, seq(
-      repeat($.attribute_item),
       field('function', $._expression_except_range),
       field('arguments', $.arguments),
     )),
@@ -1363,7 +1370,6 @@ const grammarOptions = {
 
     array_expression: $ => seq(
       '[',
-      repeat($.attribute_item),
       choice(
         seq(
           $._expression,
@@ -1371,7 +1377,7 @@ const grammarOptions = {
           field('length', $._expression),
         ),
         seq(
-          sepBy(',', seq(repeat($.attribute_item), $._expression)),
+          sepBy(',', $._expression),
           optional(','),
         ),
       ),
@@ -1386,7 +1392,6 @@ const grammarOptions = {
 
     tuple_expression: $ => seq(
       '(',
-      repeat($.attribute_item),
       seq($._expression, ','),
       repeat(seq($._expression, ',')),
       optional($._expression),
@@ -1592,7 +1597,7 @@ const grammarOptions = {
 
     continue_expression: $ => prec.left(seq('continue', optional($.label))),
 
-    index_expression: $ => prec(PREC.call, seq(repeat($.attribute_item), $._expression, '[', $._expression, ']')),
+    index_expression: $ => prec(PREC.call, seq($._expression, '[', $._expression, ']')),
 
     await_expression: $ => prec(PREC.field, seq(
       $._expression,
@@ -1756,7 +1761,6 @@ const grammarOptions = {
 
     // Verus assert/assume expressions
     assert_expression: $ => seq(
-      // repeat($.attribute_item),
       'assert',
       '(',
       $._expression,
@@ -1764,7 +1768,6 @@ const grammarOptions = {
     ),
 
     assume_expression: $ => seq(
-      // repeat($.attribute_item),
       'assume',
       '(',
       $._expression,
@@ -1775,7 +1778,7 @@ const grammarOptions = {
     prover: $ => seq('(', $.identifier, ')'),
 
     assert_by_expression: $ => seq(
-      // repeat($.attribute_item),
+      repeat($.attribute_item),
       'assert',
       '(',
       $._expression,
@@ -1786,7 +1789,7 @@ const grammarOptions = {
     ),
 
     assert_by_block_expression: $ => seq(
-      // repeat($.attribute_item),
+      repeat($.attribute_item),
       'assert',
       '(',
       $._expression,
@@ -1799,7 +1802,7 @@ const grammarOptions = {
 
     // Verus assert forall
     assert_forall_expression: $ => seq(
-      // repeat($.attribute_item),
+      repeat($.attribute_item),
       'assert',
       'forall',
       $.closure_expression,
@@ -1810,7 +1813,6 @@ const grammarOptions = {
 
     // Verus quantifier expressions
     quantifier_expression: $ => prec(PREC.closure, seq(
-      // repeat($.attribute_item),
       choice('forall', 'exists', 'choice'),
       $.closure_parameters,
       repeat($.inner_attribute_item),
