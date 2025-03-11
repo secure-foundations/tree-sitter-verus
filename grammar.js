@@ -57,7 +57,7 @@ const TOKEN_TREE_NON_SPECIAL_PUNCTUATION = [
 
 const primitiveTypes = numericTypes.concat(['bool', 'str', 'char']);
 
-module.exports = grammar({
+const grammarOptions = {
   name: 'rust',
 
   extras: $ => [
@@ -114,15 +114,16 @@ module.exports = grammar({
 
   word: $ => $.identifier,
 
-  rules: {
+  rules: parametric(["rust", "verus"], mode => ({
     source_file: $ => seq(
       optional($.shebang),
       repeat($._statement),
     ),
 
     _statement: $ => choice(
+      prec(1, $.verus_block),
       $.expression_statement,
-      $._declaration_statement,
+      $._declaration_statement$(mode),
     ),
 
     empty_statement: _ => ';',
@@ -145,7 +146,7 @@ module.exports = grammar({
       $.union_item,
       $.enum_item,
       $.type_item,
-      $.function_item,
+      $.function_item$(mode),
       $.function_signature_item,
       $.impl_item,
       $.trait_item,
@@ -432,9 +433,16 @@ module.exports = grammar({
       ';',
     ),
 
+    function_mode: $ => choice(
+      'spec',
+      'proof',
+      'exec',
+    ),
+
     function_item: $ => seq(
       optional($.visibility_modifier),
       optional($.function_modifiers),
+      ...mode === 'verus' ? [optional($.function_mode)] : [],
       'fn',
       field('name', choice($.identifier, $.metavariable)),
       field('type_parameters', optional($.type_parameters)),
@@ -970,6 +978,15 @@ module.exports = grammar({
       $.loop_expression,
       $.for_expression,
       $.const_block,
+    ),
+
+    verus_block: $ => seq(
+      'verus',
+      '!',
+      choice(
+        // TODO: Allowing only {} for now, but technically should allow () and [] as well.
+        seq('{', repeat($._statement$verus), '}'),
+      ),
     ),
 
     macro_invocation: $ => seq(
@@ -1659,8 +1676,10 @@ module.exports = grammar({
     crate: _ => 'crate',
 
     metavariable: _ => /\$[a-zA-Z_]\w*/,
-  },
-});
+  })),
+};
+
+module.exports = grammar(grammarOptions);
 
 /**
  * Creates a rule to match one or more of the rules separated by the separator.
@@ -1685,4 +1704,56 @@ function sepBy1(sep, rule) {
  */
 function sepBy(sep, rule) {
   return optional(sepBy1(sep, rule));
+}
+
+/**
+ * Makes the given rules parametric in an argument
+ * ranging over values in `options`.
+ * It essentially makes |options| copies of the rules,
+ * each with the unique prefix of "$<option>".
+ *
+ * For each rule <rule>, the default rule name <rule>
+ * points to the first option <rule>$<options[0]>.
+ *
+ * To use the parametric rule in another rule, one can apply it by
+ * $.<rule>$("<option>"), otherwise $.<rule> refers to the default rule.
+ *
+ * @param {string[]} options
+ * @param {(param: string) => RuleBuilders<string, string>} rules_gen
+ * @returns {RuleBuilders<string, string>}
+ */
+function parametric(options, rules_gen) {
+  /** @type RuleBuilders<string, string> */
+  const rules = {};
+  let is_default = true;
+
+  for (const option of options) {
+    const generated_rules = rules_gen(option);
+
+    for (const [name, rule] of Object.entries(generated_rules)) {
+      const rule_builder = ((rule, generated_rules) => ($, prev) => {
+        // Overrides $.<name>$(...)
+        const new$ = new Proxy($, {
+          get(target, prop, receiver) {
+            if (prop.toString().endsWith("$")) {
+              return option => $[prop.toString() + option];
+            }
+            return Reflect.get(target, prop, receiver);
+          }
+        });
+        return rule(new$, prev);
+      })(rule, generated_rules);
+
+      if (is_default) {
+        // If no prefix is given, the first option is used as the default
+        rules[name] = rule_builder;
+      }
+
+      rules[name + "$" + option] = rule_builder;
+    }
+
+    is_default = false;
+  }
+
+  return rules;
 }

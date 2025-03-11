@@ -7,6 +7,7 @@ Forked from [tree-sitter-rust](https://github.com/tree-sitter/tree-sitter-rust).
 
 ```
 cargo install --locked tree-sitter-cli
+npm install
 tree-sitter generate
 tree-sitter parse examples/ast.rs
 ```

@@ -32,7 +32,7 @@
         "named": true
       },
       {
-        "type": "function_item",
+        "type": "function_item$rust",
         "named": true
       },
       {
@@ -897,11 +897,27 @@
       "required": false,
       "types": [
         {
-          "type": "_declaration_statement",
+          "type": "_expression",
           "named": true
         },
         {
-          "type": "_expression",
+          "type": "associated_type",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
+          "type": "const_item",
+          "named": true
+        },
+        {
+          "type": "empty_statement",
+          "named": true
+        },
+        {
+          "type": "enum_item",
           "named": true
         },
         {
@@ -909,7 +925,71 @@
           "named": true
         },
         {
+          "type": "extern_crate_declaration",
+          "named": true
+        },
+        {
+          "type": "foreign_mod_item",
+          "named": true
+        },
+        {
+          "type": "function_item$rust",
+          "named": true
+        },
+        {
+          "type": "function_signature_item",
+          "named": true
+        },
+        {
+          "type": "impl_item",
+          "named": true
+        },
+        {
+          "type": "inner_attribute_item",
+          "named": true
+        },
+        {
           "type": "label",
+          "named": true
+        },
+        {
+          "type": "let_declaration",
+          "named": true
+        },
+        {
+          "type": "macro_definition",
+          "named": true
+        },
+        {
+          "type": "mod_item",
+          "named": true
+        },
+        {
+          "type": "static_item",
+          "named": true
+        },
+        {
+          "type": "struct_item",
+          "named": true
+        },
+        {
+          "type": "trait_item",
+          "named": true
+        },
+        {
+          "type": "type_item",
+          "named": true
+        },
+        {
+          "type": "union_item",
+          "named": true
+        },
+        {
+          "type": "use_declaration",
+          "named": true
+        },
+        {
+          "type": "verus_block",
           "named": true
         }
       ]
@@ -2011,7 +2091,7 @@
     "fields": {}
   },
   {
-    "type": "function_item",
+    "type": "function_item$rust",
     "named": true,
     "fields": {
       "body": {
@@ -2087,6 +2167,93 @@
         }
       ]
     }
+  },
+  {
+    "type": "function_item$verus",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "block",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "metavariable",
+            "named": true
+          }
+        ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "parameters",
+            "named": true
+          }
+        ]
+      },
+      "return_type": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_type",
+            "named": true
+          }
+        ]
+      },
+      "type_parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "type_parameters",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "function_mode",
+          "named": true
+        },
+        {
+          "type": "function_modifiers",
+          "named": true
+        },
+        {
+          "type": "visibility_modifier",
+          "named": true
+        },
+        {
+          "type": "where_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "function_mode",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "function_modifiers",
@@ -3678,7 +3845,23 @@
       "required": false,
       "types": [
         {
-          "type": "_declaration_statement",
+          "type": "associated_type",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
+          "type": "const_item",
+          "named": true
+        },
+        {
+          "type": "empty_statement",
+          "named": true
+        },
+        {
+          "type": "enum_item",
           "named": true
         },
         {
@@ -3686,7 +3869,75 @@
           "named": true
         },
         {
+          "type": "extern_crate_declaration",
+          "named": true
+        },
+        {
+          "type": "foreign_mod_item",
+          "named": true
+        },
+        {
+          "type": "function_item$rust",
+          "named": true
+        },
+        {
+          "type": "function_signature_item",
+          "named": true
+        },
+        {
+          "type": "impl_item",
+          "named": true
+        },
+        {
+          "type": "inner_attribute_item",
+          "named": true
+        },
+        {
+          "type": "let_declaration",
+          "named": true
+        },
+        {
+          "type": "macro_definition",
+          "named": true
+        },
+        {
+          "type": "macro_invocation",
+          "named": true
+        },
+        {
+          "type": "mod_item",
+          "named": true
+        },
+        {
           "type": "shebang",
+          "named": true
+        },
+        {
+          "type": "static_item",
+          "named": true
+        },
+        {
+          "type": "struct_item",
+          "named": true
+        },
+        {
+          "type": "trait_item",
+          "named": true
+        },
+        {
+          "type": "type_item",
+          "named": true
+        },
+        {
+          "type": "union_item",
+          "named": true
+        },
+        {
+          "type": "use_declaration",
+          "named": true
+        },
+        {
+          "type": "verus_block",
           "named": true
         }
       ]
@@ -4865,6 +5116,109 @@
     }
   },
   {
+    "type": "verus_block",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "associated_type",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
+          "named": true
+        },
+        {
+          "type": "const_item",
+          "named": true
+        },
+        {
+          "type": "empty_statement",
+          "named": true
+        },
+        {
+          "type": "enum_item",
+          "named": true
+        },
+        {
+          "type": "expression_statement",
+          "named": true
+        },
+        {
+          "type": "extern_crate_declaration",
+          "named": true
+        },
+        {
+          "type": "foreign_mod_item",
+          "named": true
+        },
+        {
+          "type": "function_item$verus",
+          "named": true
+        },
+        {
+          "type": "function_signature_item",
+          "named": true
+        },
+        {
+          "type": "impl_item",
+          "named": true
+        },
+        {
+          "type": "inner_attribute_item",
+          "named": true
+        },
+        {
+          "type": "let_declaration",
+          "named": true
+        },
+        {
+          "type": "macro_definition",
+          "named": true
+        },
+        {
+          "type": "macro_invocation",
+          "named": true
+        },
+        {
+          "type": "mod_item",
+          "named": true
+        },
+        {
+          "type": "static_item",
+          "named": true
+        },
+        {
+          "type": "struct_item",
+          "named": true
+        },
+        {
+          "type": "trait_item",
+          "named": true
+        },
+        {
+          "type": "type_item",
+          "named": true
+        },
+        {
+          "type": "union_item",
+          "named": true
+        },
+        {
+          "type": "use_declaration",
+          "named": true
+        },
+        {
+          "type": "verus_block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "visibility_modifier",
     "named": true,
     "fields": {},
@@ -5300,6 +5654,10 @@
     "named": true
   },
   {
+    "type": "exec",
+    "named": false
+  },
+  {
     "type": "expr",
     "named": false
   },
@@ -5416,6 +5774,10 @@
     "named": true
   },
   {
+    "type": "proof",
+    "named": false
+  },
+  {
     "type": "pub",
     "named": false
   },
@@ -5442,6 +5804,10 @@
   {
     "type": "shorthand_field_identifier",
     "named": true
+  },
+  {
+    "type": "spec",
+    "named": false
   },
   {
     "type": "static",
@@ -5501,6 +5867,10 @@
   },
   {
     "type": "use",
+    "named": false
+  },
+  {
+    "type": "verus",
     "named": false
   },
   {
