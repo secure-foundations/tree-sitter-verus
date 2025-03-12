@@ -1869,6 +1869,36 @@
     }
   },
   {
+    "type": "const_assign_or_spec",
+    "named": true,
+    "fields": {
+      "value": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "ensures_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "const_block",
     "named": true,
     "fields": {
@@ -1907,28 +1937,14 @@
             "named": true
           }
         ]
-      },
-      "value": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "_expression",
-            "named": true
-          }
-        ]
       }
     },
     "children": {
       "multiple": true,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "block",
-          "named": true
-        },
-        {
-          "type": "ensures_clause",
+          "type": "const_assign_or_spec",
           "named": true
         },
         {
@@ -2054,7 +2070,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -2125,7 +2141,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -3359,7 +3375,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -3374,7 +3390,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -3389,7 +3405,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -4399,7 +4415,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -4524,7 +4540,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "_expression",
@@ -4829,24 +4845,14 @@
             "named": true
           }
         ]
-      },
-      "value": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "_expression",
-            "named": true
-          }
-        ]
       }
     },
     "children": {
       "multiple": true,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "fn_qualifier",
+          "type": "const_assign_or_spec",
           "named": true
         },
         {
@@ -6245,6 +6251,14 @@
   },
   {
     "type": "!==",
+    "named": false
+  },
+  {
+    "type": "!has",
+    "named": false
+  },
+  {
+    "type": "!is",
     "named": false
   },
   {

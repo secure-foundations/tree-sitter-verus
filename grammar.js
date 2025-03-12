@@ -568,14 +568,7 @@ module.exports = grammar({
       ';',
     ),
 
-    const_item: $ => seq(
-      optional($.visibility_modifier),
-      $verus(optional($.publish)),
-      $verus(optional($.function_mode)),
-      'const',
-      field('name', $.identifier),
-      ':',
-      field('type', $._type),
+    const_assign_or_spec: $ => choice(
       choice(
         seq(
           optional(
@@ -586,8 +579,19 @@ module.exports = grammar({
           ),
           ';',
         ),
-        seq($.ensures_clause, $.block),
-      ),
+        $verus(seq($.ensures_clause, $.block)),
+      )
+    ),
+
+    const_item: $ => seq(
+      optional($.visibility_modifier),
+      $verus(optional($.publish)),
+      $verus(optional($.function_mode)),
+      'const',
+      field('name', $.identifier),
+      ':',
+      field('type', $._type),
+      $.const_assign_or_spec,
     ),
 
     static_item: $ => seq(
@@ -602,12 +606,7 @@ module.exports = grammar({
       field('name', $.identifier),
       ':',
       field('type', $._type),
-      optional(seq(
-        '=',
-        field('value', $._expression),
-      )),
-      $verus(optional($.fn_qualifier)),
-      ';',
+      $.const_assign_or_spec,
     ),
 
     type_item: $ => seq(
@@ -1720,13 +1719,13 @@ module.exports = grammar({
     // Verus specific clauses
     requires_clause: $ => seq(
       'requires',
-      sepBy1(',', $._expression),
+      sepBy(',', $._expression),
       optional(','),
     ),
 
     ensures_clause: $ => seq(
       'ensures',
-      sepBy1(',', $._expression),
+      sepBy(',', $._expression),
       optional(','),
     ),
 
@@ -1738,14 +1737,14 @@ module.exports = grammar({
 
     recommends_clause: $ => seq(
       'recommends',
-      sepBy1(',', $._expression), optional(','),
+      sepBy(',', $._expression), optional(','),
       optional(seq('via', $._expression)),
       optional(','),
     ),
 
     decreases_clause: $ => seq(
       'decreases',
-      sepBy1(',', $._expression), optional(','),
+      sepBy(',', $._expression), optional(','),
       optional(seq('when', $._expression)),
       optional(seq('via', $._expression)),
       optional(','),
@@ -1753,19 +1752,19 @@ module.exports = grammar({
 
     invariant_clause: $ => seq(
       'invariant',
-      sepBy1(',', $._expression),
+      sepBy(',', $._expression),
       optional(','),
     ),
 
     invariant_ensures_clause: $ => seq(
       'invariant_ensures',
-      sepBy1(',', $._expression),
+      sepBy(',', $._expression),
       optional(','),
     ),
 
     invariant_except_break_clause: $ => seq(
       'invariant_except_break',
-      sepBy1(',', $._expression),
+      sepBy(',', $._expression),
       optional(','),
     ),
 
@@ -1785,14 +1784,18 @@ module.exports = grammar({
 
     is_expression: $ => prec.left(PREC.cast, seq(
       field('value', $._expression),
-      'is',
+      // TODO: not allowing space between ! and is
+      // to avoid a conflict with macro invocation
+      choice('!is', 'is'),
       // TODO: is this too restrictive?
       field('variant', $.identifier),
     )),
 
     has_expression: $ => prec.left(PREC.cast, seq(
       field('collection', $._expression),
-      'has',
+      // TODO: not allowing space between ! and is
+      // to avoid a conflict with macro invocation
+      choice('!has', 'has'),
       field('element', $._expression),
     )),
 
