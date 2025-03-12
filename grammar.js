@@ -3,6 +3,7 @@
  * @author Maxim Sokolov <maxim0xff@gmail.com>
  * @author Max Brunsfeld <maxbrunsfeld@gmail.com>
  * @author Amaan Qureshi <amaanq12@gmail.com>
+ * @author Zhengyao Lin <zhengyal@cmu.edu>
  * @license MIT
  */
 
