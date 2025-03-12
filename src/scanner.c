@@ -20,17 +20,17 @@ typedef struct {
     uint8_t opening_hash_count;
 } Scanner;
 
-void *tree_sitter_rust_external_scanner_create() { return ts_calloc(1, sizeof(Scanner)); }
+void *tree_sitter_verus_external_scanner_create() { return ts_calloc(1, sizeof(Scanner)); }
 
-void tree_sitter_rust_external_scanner_destroy(void *payload) { ts_free((Scanner *)payload); }
+void tree_sitter_verus_external_scanner_destroy(void *payload) { ts_free((Scanner *)payload); }
 
-unsigned tree_sitter_rust_external_scanner_serialize(void *payload, char *buffer) {
+unsigned tree_sitter_verus_external_scanner_serialize(void *payload, char *buffer) {
     Scanner *scanner = (Scanner *)payload;
     buffer[0] = (char)scanner->opening_hash_count;
     return 1;
 }
 
-void tree_sitter_rust_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
+void tree_sitter_verus_external_scanner_deserialize(void *payload, const char *buffer, unsigned length) {
     Scanner *scanner = (Scanner *)payload;
     scanner->opening_hash_count = 0;
     if (length == 1) {
@@ -331,7 +331,7 @@ static inline bool process_block_comment(TSLexer *lexer, const bool *valid_symbo
     return false;
 }
 
-bool tree_sitter_rust_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
+bool tree_sitter_verus_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     // The documentation states that if the lexical analysis fails for some reason
     // they will mark every state as valid and pass it to the external scanner
     // However, we can't do anything to help them recover in that case so we

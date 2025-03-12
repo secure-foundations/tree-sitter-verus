@@ -1,9 +1,9 @@
 {
   "grammars": [
     {
-      "name": "rust",
-      "camelcase": "Rust",
-      "scope": "source.rust",
+      "name": "verus",
+      "camelcase": "Verus",
+      "scope": "source.verus",
       "path": ".",
       "file-types": [
         "rs"
@@ -17,13 +17,13 @@
       "tags": [
         "queries/tags.scm"
       ],
-      "injection-regex": "rust"
+      "injection-regex": "verus"
     }
   ],
   "metadata": {
     "version": "0.23.2",
     "license": "MIT",
-    "description": "Rust grammar for tree-sitter",
+    "description": "Verus grammar for tree-sitter (based on tree-sitter-rust)",
     "authors": [
       {
         "name": "Maxim Sokolov",
@@ -39,7 +39,7 @@
       }
     ],
     "links": {
-      "repository": "https://github.com/tree-sitter/tree-sitter-rust"
+      "repository": "https://github.com/secure-foundations/tree-sitter-verus"
     }
   },
   "bindings": {
