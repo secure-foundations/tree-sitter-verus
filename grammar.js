@@ -148,12 +148,19 @@ module.exports = grammar({
     // e.g. (x matches ..) - 10 vs x matches (.. - 10)
     [$.remaining_field_pattern, $.range_pattern],
 
+    // e.g. expr as (fn ... -> int) vs
+    // arrow_expression: expr as (fn ...) -> int
+    [$.function_type],
+
     // TODO: Investigate these conflicts (related to matches_expression)
     [$._pattern, $.tuple_struct_pattern],
     [$._pattern, $.captured_pattern],
     [$._pattern, $.struct_pattern],
     [$.range_pattern],
     [$.generic_type_with_turbofish, $.generic_pattern],
+
+    // TODO: These conflict on #![trigger ...] and #[trigger ...]
+    [$.attribute_item, $.inner_attribute_item],
   ],
 
   word: $ => $.identifier,
@@ -167,7 +174,7 @@ module.exports = grammar({
     _statement: $ => choice(
       prec(1, $.verus_block),
       $.expression_statement,
-      seq(repeat($.attribute_item), $._declaration_statement),
+      seq($.declaration_with_attrs),
     ),
 
     empty_statement: _ => ';',
@@ -185,6 +192,11 @@ module.exports = grammar({
         $.assert_by_block_expression,
         $.assert_forall_expression,
       ]),
+    ),
+
+    declaration_with_attrs: $ => seq(
+      repeat($.attribute_item),
+      $._declaration_statement,
     ),
 
     _declaration_statement: $ => choice(
@@ -316,34 +328,46 @@ module.exports = grammar({
 
     // Section - Declarations
 
-    attribute_item: $ => seq(
+    // Verus is more lenient on the distinction
+    // between #![trigger ...] and #[trigger ...]
+    // i.e. both are allowed as inner/outer attributes
+    trigger_attribute: $ => seq(
       '#',
+      optional('!'),
       '[',
-      $.attribute,
+      'trigger',
+      sepBy(',', $._expression),
+      optional(','),
       ']',
     ),
 
-    inner_attribute_item: $ => seq(
-      '#',
-      '!',
-      '[',
-      $.attribute,
-      ']',
-    ),
-
-    attribute: $ => choice(
-      // Verus trigger attribute
-      $verus(prec(1, seq(
-        'trigger',
-        optional($._expression),
-      ))),
+    attribute_item: $ => choice(
+      prec(1, $.trigger_attribute),
       seq(
-        $._path,
-        optional(choice(
-          seq('=', field('value', $._expression)),
-          field('arguments', alias($.delim_token_tree, $.token_tree)),
-        )),
+        '#',
+        '[',
+        $.attribute,
+        ']',
       ),
+    ),
+
+    inner_attribute_item: $ => choice(
+      prec(1, $.trigger_attribute),
+      seq(
+        '#',
+        '!',
+        '[',
+        $.attribute,
+        ']',
+      ),
+    ),
+
+    attribute: $ => seq(
+      $._path,
+      optional(choice(
+        seq('=', field('value', $._expression)),
+        field('arguments', alias($.delim_token_tree, $.token_tree)),
+      )),
     ),
 
     mod_item: $ => seq(
@@ -367,7 +391,7 @@ module.exports = grammar({
 
     declaration_list: $ => seq(
       '{',
-      repeat($._declaration_statement),
+      repeat($.declaration_with_attrs),
       '}',
     ),
 
@@ -425,11 +449,9 @@ module.exports = grammar({
 
     // In Verus, the return type can be annotated with a name
     // for ensures clauses
-    return_type: $ => choice(
-      $._type,
-      seq(
-        '(', $.identifier, ':', $._type, ')',
-      ),
+    named_return_type: $ => choice(
+      seq(optional('tracked'), $._type),
+      seq('(', optional('tracked'), $.identifier, ':', $._type, ')'),
     ),
 
     // Verus - assume specification
@@ -438,10 +460,10 @@ module.exports = grammar({
       'assume_specification',
       optional($.type_parameters),
       '[',
-      field('target', $._path),
+      field('target', choice($.scoped_identifier, $.generic_function)),
       ']',
       field('parameters', $.parameters),
-      optional(seq('->', field('return_type', $.return_type))),
+      optional(seq('->', field('return_type', $.named_return_type))),
       optional($.where_clause),
       optional($.fn_qualifier),
       ';',
@@ -554,14 +576,18 @@ module.exports = grammar({
       field('name', $.identifier),
       ':',
       field('type', $._type),
-      optional(
+      choice(
         seq(
-          '=',
-          field('value', $._expression),
+          optional(
+            seq(
+              '=',
+              field('value', $._expression),
+            ),
+          ),
+          ';',
         ),
+        seq($.ensures_clause, $.block),
       ),
-      $verus(optional($.fn_qualifier)),
-      ';',
     ),
 
     static_item: $ => seq(
@@ -628,13 +654,13 @@ module.exports = grammar({
       optional($.visibility_modifier),
       $verus(optional($.publish)),
       optional($.function_modifiers),
-      $verus(optional($.function_mode)),
       $verus(optional('broadcast')),
+      $verus(optional($.function_mode)),
       'fn',
       field('name', choice($.identifier, $.metavariable)),
       field('type_parameters', optional($.type_parameters)),
       field('parameters', $.parameters),
-      optional(seq('->', field('return_type', $.return_type))),
+      optional(seq('->', field('return_type', $.named_return_type))),
       optional($.where_clause),
       $verus(optional(seq('by', $.prover))),
       $verus(optional($.fn_qualifier)),
@@ -645,13 +671,13 @@ module.exports = grammar({
       optional($.visibility_modifier),
       $verus(optional($.publish)),
       optional($.function_modifiers),
-      $verus(optional($.function_mode)),
       $verus(optional('broadcast')),
+      $verus(optional($.function_mode)),
       'fn',
       field('name', choice($.identifier, $.metavariable)),
       field('type_parameters', optional($.type_parameters)),
       field('parameters', $.parameters),
-      optional(seq('->', field('return_type', $.return_type))),
+      optional(seq('->', field('return_type', $.named_return_type))),
       optional($.where_clause),
       $verus(optional(seq('by', $.prover))),
       $verus(optional($.fn_qualifier)),
@@ -1026,6 +1052,7 @@ module.exports = grammar({
         $._reserved_identifier,
         $.scoped_type_identifier,
       )),
+      optional('::'),
       field('type_arguments', $.type_arguments),
     )),
 
@@ -1145,6 +1172,7 @@ module.exports = grammar({
       $.generic_function,
       $.await_expression,
       $.field_expression,
+      $.arrow_expression,
       $.array_expression,
       $.tuple_expression,
       prec(1, $.macro_invocation),
@@ -1160,6 +1188,7 @@ module.exports = grammar({
       $.attribute_expression,
       ...$verus([
         $.is_expression,
+        $.has_expression,
         $.matches_expression,
         $.view_expression,
         $.assert_expression,
@@ -1289,8 +1318,6 @@ module.exports = grammar({
     binary_expression: $ => {
       const table = $verus([
         [PREC.comparative, choice('===', '=~=', '=~~=', '!==')],
-        // TODO: what is this?
-        // [PREC.logical, choice('<==')],
       ]).concat([
         [PREC.and, '&&'],
         [PREC.or, '||'],
@@ -1308,6 +1335,12 @@ module.exports = grammar({
         $verus(prec.right(PREC.logical, seq(
           field('left', $._expression),
           field('operator', '==>'),
+          field('right', $._expression),
+        ))),
+
+        $verus(prec.left(PREC.logical, seq(
+          field('left', $._expression),
+          field('operator', '<=='),
           field('right', $._expression),
         ))),
 
@@ -1570,9 +1603,10 @@ module.exports = grammar({
       optional('async'),
       optional('move'),
       field('parameters', $.closure_parameters),
+      repeat($.inner_attribute_item),
       choice(
         seq(
-          optional(seq('->', field('return_type', $.return_type))),
+          optional(seq('->', field('return_type', $.named_return_type))),
           $verus(optional($.fn_qualifier)),
           field('body', $.block),
         ),
@@ -1607,6 +1641,15 @@ module.exports = grammar({
     field_expression: $ => prec(PREC.field, seq(
       field('value', $._expression),
       '.',
+      field('field', choice(
+        $._field_identifier,
+        $.integer_literal,
+      )),
+    )),
+
+    arrow_expression: $ => prec(PREC.field, seq(
+      field('value', $._expression),
+      '->',
       field('field', choice(
         $._field_identifier,
         $.integer_literal,
@@ -1686,14 +1729,14 @@ module.exports = grammar({
 
     recommends_clause: $ => seq(
       'recommends',
-      sepBy1(',', $._expression),
+      sepBy1(',', $._expression), optional(','),
       optional(seq('via', $._expression)),
       optional(','),
     ),
 
     decreases_clause: $ => seq(
       'decreases',
-      sepBy1(',', $._expression),
+      sepBy1(',', $._expression), optional(','),
       optional(seq('when', $._expression)),
       optional(seq('via', $._expression)),
       optional(','),
@@ -1736,6 +1779,12 @@ module.exports = grammar({
       'is',
       // TODO: is this too restrictive?
       field('variant', $.identifier),
+    )),
+
+    has_expression: $ => prec.left(PREC.cast, seq(
+      field('collection', $._expression),
+      'has',
+      field('element', $._expression),
     )),
 
     matches_expression: $ => prec.left(PREC.cast, seq(

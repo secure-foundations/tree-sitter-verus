@@ -114,6 +114,10 @@
         "named": true
       },
       {
+        "type": "arrow_expression",
+        "named": true
+      },
+      {
         "type": "assert_expression",
         "named": true
       },
@@ -183,6 +187,10 @@
       },
       {
         "type": "generic_function",
+        "named": true
+      },
+      {
+        "type": "has_expression",
         "named": true
       },
       {
@@ -637,6 +645,36 @@
     }
   },
   {
+    "type": "arrow_expression",
+    "named": true,
+    "fields": {
+      "field": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "field_identifier",
+            "named": true
+          },
+          {
+            "type": "integer_literal",
+            "named": true
+          }
+        ]
+      },
+      "value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "assert_by_block_expression",
     "named": true,
     "fields": {},
@@ -830,7 +868,7 @@
         "required": false,
         "types": [
           {
-            "type": "return_type",
+            "type": "named_return_type",
             "named": true
           }
         ]
@@ -840,27 +878,11 @@
         "required": true,
         "types": [
           {
-            "type": "crate",
-            "named": true
-          },
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "metavariable",
+            "type": "generic_function",
             "named": true
           },
           {
             "type": "scoped_identifier",
-            "named": true
-          },
-          {
-            "type": "self",
-            "named": true
-          },
-          {
-            "type": "super",
             "named": true
           }
         ]
@@ -931,14 +953,26 @@
     },
     "children": {
       "multiple": false,
-      "required": false,
+      "required": true,
       "types": [
         {
-          "type": "_expression",
+          "type": "crate",
           "named": true
         },
         {
-          "type": "crate",
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "metavariable",
+          "named": true
+        },
+        {
+          "type": "scoped_identifier",
+          "named": true
+        },
+        {
+          "type": "self",
           "named": true
         },
         {
@@ -977,6 +1011,10 @@
       "types": [
         {
           "type": "attribute",
+          "named": true
+        },
+        {
+          "type": "trigger_attribute",
           "named": true
         }
       ]
@@ -1109,6 +1147,10 @@
             "named": false
           },
           {
+            "type": "<==",
+            "named": false
+          },
+          {
             "type": "<==>",
             "named": false
           },
@@ -1179,15 +1221,7 @@
       "required": false,
       "types": [
         {
-          "type": "_declaration_statement",
-          "named": true
-        },
-        {
           "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "attribute_item",
           "named": true
         },
         {
@@ -1196,6 +1230,10 @@
         },
         {
           "type": "big_or_expression",
+          "named": true
+        },
+        {
+          "type": "declaration_with_attrs",
           "named": true
         },
         {
@@ -1452,6 +1490,10 @@
             "named": true
           },
           {
+            "type": "arrow_expression",
+            "named": true
+          },
+          {
             "type": "assert_expression",
             "named": true
           },
@@ -1521,6 +1563,10 @@
           },
           {
             "type": "generic_function",
+            "named": true
+          },
+          {
+            "type": "has_expression",
             "named": true
           },
           {
@@ -1683,7 +1729,7 @@
         "required": false,
         "types": [
           {
-            "type": "return_type",
+            "type": "named_return_type",
             "named": true
           }
         ]
@@ -1695,6 +1741,10 @@
       "types": [
         {
           "type": "fn_qualifier",
+          "named": true
+        },
+        {
+          "type": "inner_attribute_item",
           "named": true
         },
         {
@@ -1851,7 +1901,11 @@
       "required": false,
       "types": [
         {
-          "type": "fn_qualifier",
+          "type": "block",
+          "named": true
+        },
+        {
+          "type": "ensures_clause",
           "named": true
         },
         {
@@ -1946,7 +2000,26 @@
       "required": false,
       "types": [
         {
+          "type": "declaration_with_attrs",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "declaration_with_attrs",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
           "type": "_declaration_statement",
+          "named": true
+        },
+        {
+          "type": "attribute_item",
           "named": true
         }
       ]
@@ -2641,7 +2714,7 @@
         "required": false,
         "types": [
           {
-            "type": "return_type",
+            "type": "named_return_type",
             "named": true
           }
         ]
@@ -2745,7 +2818,7 @@
         "required": false,
         "types": [
           {
-            "type": "return_type",
+            "type": "named_return_type",
             "named": true
           }
         ]
@@ -3059,6 +3132,32 @@
     }
   },
   {
+    "type": "has_expression",
+    "named": true,
+    "fields": {
+      "collection": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          }
+        ]
+      },
+      "element": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "_expression",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "higher_ranked_trait_bound",
     "named": true,
     "fields": {
@@ -3217,6 +3316,10 @@
       "types": [
         {
           "type": "attribute",
+          "named": true
+        },
+        {
+          "type": "trigger_attribute",
           "named": true
         }
       ]
@@ -3816,6 +3919,25 @@
     }
   },
   {
+    "type": "named_return_type",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_type",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "negative_literal",
     "named": true,
     "fields": {},
@@ -4404,25 +4526,6 @@
     }
   },
   {
-    "type": "return_type",
-    "named": true,
-    "fields": {},
-    "children": {
-      "multiple": true,
-      "required": true,
-      "types": [
-        {
-          "type": "_type",
-          "named": true
-        },
-        {
-          "type": "identifier",
-          "named": true
-        }
-      ]
-    }
-  },
-  {
     "type": "returns_clause",
     "named": true,
     "fields": {},
@@ -4662,11 +4765,7 @@
       "required": false,
       "types": [
         {
-          "type": "_declaration_statement",
-          "named": true
-        },
-        {
-          "type": "attribute_item",
+          "type": "declaration_with_attrs",
           "named": true
         },
         {
@@ -5203,6 +5302,21 @@
         },
         {
           "type": "where_clause",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "trigger_attribute",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "_expression",
           "named": true
         }
       ]
@@ -5877,11 +5991,7 @@
       "required": false,
       "types": [
         {
-          "type": "_declaration_statement",
-          "named": true
-        },
-        {
-          "type": "attribute_item",
+          "type": "declaration_with_attrs",
           "named": true
         },
         {
@@ -6504,6 +6614,10 @@
   },
   {
     "type": "group",
+    "named": false
+  },
+  {
+    "type": "has",
     "named": false
   },
   {
