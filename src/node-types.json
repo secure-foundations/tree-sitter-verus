@@ -122,6 +122,10 @@
         "named": true
       },
       {
+        "type": "assert_macro_call",
+        "named": true
+      },
+      {
         "type": "assignment_expression",
         "named": true
       },
@@ -757,6 +761,21 @@
         },
         {
           "type": "attribute_item",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "assert_macro_call",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "token_tree",
           "named": true
         }
       ]
@@ -1495,6 +1514,10 @@
           },
           {
             "type": "assert_expression",
+            "named": true
+          },
+          {
+            "type": "assert_macro_call",
             "named": true
           },
           {

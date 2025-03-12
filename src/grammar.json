@@ -6735,8 +6735,38 @@
         {
           "type": "SYMBOL",
           "name": "quantifier_expression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "assert_macro_call"
         }
       ]
+    },
+    "assert_macro_call": {
+      "type": "PREC",
+      "value": 100,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "assert"
+          },
+          {
+            "type": "STRING",
+            "value": "!"
+          },
+          {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "delim_token_tree"
+            },
+            "named": true,
+            "value": "token_tree"
+          }
+        ]
+      }
     },
     "_expression": {
       "type": "CHOICE",

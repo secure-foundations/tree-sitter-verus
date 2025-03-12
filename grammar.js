@@ -1194,8 +1194,17 @@ module.exports = grammar({
         $.assert_expression,
         $.assume_expression,
         $.quantifier_expression,
+
+        // A special case for the original `assert!` macro in Rust
+        // TODO: not ideal
+        $.assert_macro_call,
       ]),
     ),
+
+    assert_macro_call: $ => prec(PREC.call, seq(
+      'assert', '!',
+      alias($.delim_token_tree, $.token_tree),
+    )),
 
     _expression: $ => choice(
       $._expression_except_range,
