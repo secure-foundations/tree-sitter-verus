@@ -73,8 +73,8 @@ function $verus(rule) {
   return rule;
 }
 
-const grammarOptions = {
-  name: 'rust',
+module.exports = grammar({
+  name: 'verus',
 
   extras: $ => [
     /\s/,
@@ -142,20 +142,18 @@ const grammarOptions = {
     // e.g. assert forall |x:int| assert(false) by { .. }
     // [$.assert_expression, $.assert_by_expression],
 
-    // TODO: Investigate ambiguity with #[trigger]
-    // e.g. #[trigger] f(...)
-    // [$._statement, $.call_expression, $.index_expression],
-    // [$.call_expression],
-    // [$.index_expression],
+    // e.g. (expr matches 1) .. 10 vs expr matches (1 .. 10)
+    [$._pattern, $.range_pattern],
 
-    // [$.assert_by_expression, $.assert_by_block_expression],
-    // [$.assert_by_expression],
+    // e.g. (x matches ..) - 10 vs x matches (.. - 10)
+    [$.remaining_field_pattern, $.range_pattern],
 
-    // [$.scoped_identifier],
-    // [$.matches_pattern, $.range_pattern],
-    // [$.matches_pattern, $.tuple_struct_pattern],
-    // [$.scoped_identifier, $.scoped_type_identifier, $._pattern],
-    // [$.remaining_field_pattern, $.range_pattern],
+    // TODO: Investigate these conflicts (related to matches_expression)
+    [$._pattern, $.tuple_struct_pattern],
+    [$._pattern, $.captured_pattern],
+    [$._pattern, $.struct_pattern],
+    [$.range_pattern],
+    [$.generic_type_with_turbofish, $.generic_pattern],
   ],
 
   word: $ => $.identifier,
@@ -1588,6 +1586,7 @@ const grammarOptions = {
         $._pattern,
         $.parameter,
       )),
+      optional(','),
       '|',
     ),
 
@@ -1644,7 +1643,6 @@ const grammarOptions = {
         $._expression,
         $.big_and_expression,
         $.big_or_expression,
-        $.matches_expression_without_body,
       )),
       '}',
     ),
@@ -1652,11 +1650,11 @@ const grammarOptions = {
     // Special handling of Verus &&&/|||
     // which are only allowed to occur in blocks
     big_and_expression: $ => seq('&&&',
-      sepBy('&&&', choice($._expression, $.matches_expression_without_body)),
+      sepBy('&&&', $._expression),
     ),
 
     big_or_expression: $ => seq('|||',
-      sepBy('|||', choice($._expression, $.matches_expression_without_body)),
+      sepBy('|||', $._expression),
     ),
 
     // Verus proof block
@@ -1740,18 +1738,10 @@ const grammarOptions = {
       field('variant', $.identifier),
     )),
 
-    matches_expression_without_body: $ => prec.left(PREC.cast, seq(
+    matches_expression: $ => prec.left(PREC.cast, seq(
       field('value', $._expression),
       'matches',
       field('pattern', $._pattern),
-    )),
-
-    matches_expression: $ => prec.left(PREC.comparative, seq(
-        field('matches', $.matches_expression_without_body),
-        choice(
-          seq('==>', field('body', $._expression)),
-          seq('&&', field('body', $._expression)),
-        ),
     )),
 
     view_expression: $ => prec.left(PREC.cast, seq(
@@ -1813,7 +1803,7 @@ const grammarOptions = {
 
     // Verus quantifier expressions
     quantifier_expression: $ => prec(PREC.closure, seq(
-      choice('forall', 'exists', 'choice'),
+      choice('forall', 'exists', 'choose'),
       $.closure_parameters,
       repeat($.inner_attribute_item),
       choice(
@@ -2133,9 +2123,7 @@ const grammarOptions = {
 
     metavariable: _ => /\$[a-zA-Z_]\w*/,
   },
-};
-
-module.exports = grammar(grammarOptions);
+});
 
 /**
  * Creates a rule to match one or more of the rules separated by the separator.
@@ -2160,56 +2148,4 @@ function sepBy1(sep, rule) {
  */
 function sepBy(sep, rule) {
   return optional(sepBy1(sep, rule));
-}
-
-/**
- * Makes the given rules parametric in an argument
- * ranging over values in `options`.
- * It essentially makes |options| copies of the rules,
- * each with the unique prefix of "$<option>".
- *
- * For each rule <rule>, the default rule name <rule>
- * points to the first option <rule>$<options[0]>.
- *
- * To use the parametric rule in another rule, one can apply it by
- * $.<rule>$("<option>"), otherwise $.<rule> refers to the default rule.
- *
- * @param {string[]} options
- * @param {(param: string) => RuleBuilders<string, string>} rules_gen
- * @returns {RuleBuilders<string, string>}
- */
-function parametric(options, rules_gen) {
-  /** @type RuleBuilders<string, string> */
-  const rules = {};
-  let is_default = true;
-
-  for (const option of options) {
-    const generated_rules = rules_gen(option);
-
-    for (const [name, rule] of Object.entries(generated_rules)) {
-      const rule_builder = ((rule, generated_rules) => ($, prev) => {
-        // Overrides $.<name>$(...)
-        const new$ = new Proxy($, {
-          get(target, prop, receiver) {
-            if (prop.toString().endsWith("$")) {
-              return option => $[prop.toString() + option];
-            }
-            return Reflect.get(target, prop, receiver);
-          }
-        });
-        return rule(new$, prev);
-      })(rule, generated_rules);
-
-      if (is_default) {
-        // If no prefix is given, the first option is used as the default
-        rules[name] = rule_builder;
-      }
-
-      rules[name + "$" + option] = rule_builder;
-    }
-
-    is_default = false;
-  }
-
-  return rules;
 }

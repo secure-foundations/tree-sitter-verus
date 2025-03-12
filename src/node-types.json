@@ -1023,10 +1023,6 @@
         {
           "type": "_expression",
           "named": true
-        },
-        {
-          "type": "matches_expression_without_body",
-          "named": true
         }
       ]
     }
@@ -1041,10 +1037,6 @@
       "types": [
         {
           "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "matches_expression_without_body",
           "named": true
         }
       ]
@@ -1212,10 +1204,6 @@
         },
         {
           "type": "label",
-          "named": true
-        },
-        {
-          "type": "matches_expression_without_body",
           "named": true
         },
         {
@@ -3748,32 +3736,6 @@
   },
   {
     "type": "matches_expression",
-    "named": true,
-    "fields": {
-      "body": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "_expression",
-            "named": true
-          }
-        ]
-      },
-      "matches": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "matches_expression_without_body",
-            "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "matches_expression_without_body",
     "named": true,
     "fields": {
       "pattern": {
@@ -6434,10 +6396,6 @@
   },
   {
     "type": "checked",
-    "named": false
-  },
-  {
-    "type": "choice",
     "named": false
   },
   {

@@ -1,6 +1,6 @@
 {
   "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/grammar.schema.json",
-  "name": "rust",
+  "name": "verus",
   "word": "identifier",
   "rules": {
     "source_file": {
@@ -9236,6 +9236,18 @@
           ]
         },
         {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
           "type": "STRING",
           "value": "|"
         }
@@ -9528,10 +9540,6 @@
                 {
                   "type": "SYMBOL",
                   "name": "big_or_expression"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "matches_expression_without_body"
                 }
               ]
             },
@@ -9560,17 +9568,8 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_expression"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "matches_expression_without_body"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "_expression"
                 },
                 {
                   "type": "REPEAT",
@@ -9582,17 +9581,8 @@
                         "value": "&&&"
                       },
                       {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SYMBOL",
-                            "name": "_expression"
-                          },
-                          {
-                            "type": "SYMBOL",
-                            "name": "matches_expression_without_body"
-                          }
-                        ]
+                        "type": "SYMBOL",
+                        "name": "_expression"
                       }
                     ]
                   }
@@ -9620,17 +9610,8 @@
               "type": "SEQ",
               "members": [
                 {
-                  "type": "CHOICE",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_expression"
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "matches_expression_without_body"
-                    }
-                  ]
+                  "type": "SYMBOL",
+                  "name": "_expression"
                 },
                 {
                   "type": "REPEAT",
@@ -9642,17 +9623,8 @@
                         "value": "|||"
                       },
                       {
-                        "type": "CHOICE",
-                        "members": [
-                          {
-                            "type": "SYMBOL",
-                            "name": "_expression"
-                          },
-                          {
-                            "type": "SYMBOL",
-                            "name": "matches_expression_without_body"
-                          }
-                        ]
+                        "type": "SYMBOL",
+                        "name": "_expression"
                       }
                     ]
                   }
@@ -10237,7 +10209,7 @@
         ]
       }
     },
-    "matches_expression_without_body": {
+    "matches_expression": {
       "type": "PREC_LEFT",
       "value": 11,
       "content": {
@@ -10262,62 +10234,6 @@
               "type": "SYMBOL",
               "name": "_pattern"
             }
-          }
-        ]
-      }
-    },
-    "matches_expression": {
-      "type": "PREC_LEFT",
-      "value": 4,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "FIELD",
-            "name": "matches",
-            "content": {
-              "type": "SYMBOL",
-              "name": "matches_expression_without_body"
-            }
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "==>"
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "body",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_expression"
-                    }
-                  }
-                ]
-              },
-              {
-                "type": "SEQ",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": "&&"
-                  },
-                  {
-                    "type": "FIELD",
-                    "name": "body",
-                    "content": {
-                      "type": "SYMBOL",
-                      "name": "_expression"
-                    }
-                  }
-                ]
-              }
-            ]
           }
         ]
       }
@@ -10582,7 +10498,7 @@
               },
               {
                 "type": "STRING",
-                "value": "choice"
+                "value": "choose"
               }
             ]
           },
@@ -12306,6 +12222,33 @@
     ],
     [
       "invariant_except_break_clause"
+    ],
+    [
+      "_pattern",
+      "range_pattern"
+    ],
+    [
+      "remaining_field_pattern",
+      "range_pattern"
+    ],
+    [
+      "_pattern",
+      "tuple_struct_pattern"
+    ],
+    [
+      "_pattern",
+      "captured_pattern"
+    ],
+    [
+      "_pattern",
+      "struct_pattern"
+    ],
+    [
+      "range_pattern"
+    ],
+    [
+      "generic_type_with_turbofish",
+      "generic_pattern"
     ]
   ],
   "precedences": [],
