@@ -3,10 +3,10 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tree-sitter-rust"
-description = "Rust grammar for tree-sitter"
+name = "tree-sitter-verus"
+description = "Verus grammar for tree-sitter"
 version = "0.23.2"
-keywords = ["incremental", "parsing", "tree-sitter", "rust"]
+keywords = ["incremental", "parsing", "tree-sitter", "rust", "verus"]
 classifiers = [
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
@@ -23,7 +23,7 @@ license.text = "MIT"
 readme = "README.md"
 
 [project.urls]
-Homepage = "https://github.com/tree-sitter/tree-sitter-rust"
+Homepage = "https://github.com/secure-foundations/tree-sitter-verus"
 
 [project.optional-dependencies]
 core = ["tree-sitter~=0.22"]
