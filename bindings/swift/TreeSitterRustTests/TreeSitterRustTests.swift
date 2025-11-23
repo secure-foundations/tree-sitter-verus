@@ -1,12 +1,12 @@
 import XCTest
 import SwiftTreeSitter
-import TreeSitterRust
+import TreeSitterVerus
 
-final class TreeSitterRustTests: XCTestCase {
+final class TreeSitterVerusTests: XCTestCase {
     func testCanLoadGrammar() throws {
         let parser = Parser()
-        let language = Language(language: tree_sitter_rust())
+        let language = Language(language: tree_sitter_verus())
         XCTAssertNoThrow(try parser.setLanguage(language),
-                         "Error loading Rust grammar")
+                         "Error loading Verus grammar")
     }
 }
