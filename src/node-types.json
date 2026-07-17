@@ -2041,6 +2041,10 @@
         {
           "type": "declaration_with_attrs",
           "named": true
+        },
+        {
+          "type": "verus_block",
+          "named": true
         }
       ]
     }

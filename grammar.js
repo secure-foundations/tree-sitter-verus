@@ -392,7 +392,10 @@ module.exports = grammar({
 
     declaration_list: $ => seq(
       '{',
-      repeat($.declaration_with_attrs),
+      repeat(choice(
+        prec(1, $.verus_block),
+        $.declaration_with_attrs,
+      )),
       '}',
     ),
 

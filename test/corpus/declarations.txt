@@ -35,6 +35,161 @@ pub mod english;
     (identifier)))
 
 ================================================================================
+Verus blocks in modules
+================================================================================
+
+mod verified {
+    verus! {}
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (declaration_with_attrs
+    (mod_item
+      (identifier)
+      (declaration_list
+        (verus_block)))))
+
+================================================================================
+Non-empty Verus blocks in modules
+================================================================================
+
+mod verified {
+    const LIMIT: u64 = 10;
+
+    verus! {
+        pub open spec fn identity(x: int) -> int {
+            x
+        }
+
+        proof fn reflexive() {
+            assert(true);
+        }
+    }
+
+    fn runtime() -> u64 {
+        LIMIT
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (declaration_with_attrs
+    (mod_item
+      (identifier)
+      (declaration_list
+        (declaration_with_attrs
+          (const_item
+            (identifier)
+            (primitive_type)
+            (const_assign_or_spec
+              (integer_literal))))
+        (verus_block
+          (declaration_with_attrs
+            (function_item
+              (visibility_modifier)
+              (publish)
+              (function_mode)
+              (identifier)
+              (parameters
+                (parameter
+                  (identifier)
+                  (primitive_type)))
+              (named_return_type
+                (primitive_type))
+              (block
+                (identifier))))
+          (declaration_with_attrs
+            (function_item
+              (function_mode)
+              (identifier)
+              (parameters)
+              (block
+                (expression_statement
+                  (assert_expression
+                    (boolean_literal)))))))
+        (declaration_with_attrs
+          (function_item
+            (identifier)
+            (parameters)
+            (named_return_type
+              (primitive_type))
+            (block
+              (identifier))))))))
+
+================================================================================
+Verus blocks in nested modules
+================================================================================
+
+mod outer {
+    fn helper() {}
+
+    verus! {
+        spec fn outer_value() -> nat {
+            1
+        }
+    }
+
+    mod inner {
+        verus! {
+            spec fn zero() -> nat {
+                0
+            }
+        }
+    }
+
+    verus! {
+        proof fn done() {}
+    }
+}
+
+--------------------------------------------------------------------------------
+
+(source_file
+  (declaration_with_attrs
+    (mod_item
+      (identifier)
+      (declaration_list
+        (declaration_with_attrs
+          (function_item
+            (identifier)
+            (parameters)
+            (block)))
+        (verus_block
+          (declaration_with_attrs
+            (function_item
+              (function_mode)
+              (identifier)
+              (parameters)
+              (named_return_type
+                (primitive_type))
+              (block
+                (integer_literal)))))
+        (declaration_with_attrs
+          (mod_item
+            (identifier)
+            (declaration_list
+              (verus_block
+                (declaration_with_attrs
+                  (function_item
+                    (function_mode)
+                    (identifier)
+                    (parameters)
+                    (named_return_type
+                      (primitive_type))
+                    (block
+                      (integer_literal))))))))
+        (verus_block
+          (declaration_with_attrs
+            (function_item
+              (function_mode)
+              (identifier)
+              (parameters)
+              (block))))))))
+
+================================================================================
 Extern crate declarations
 ================================================================================
 

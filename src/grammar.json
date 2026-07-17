@@ -1701,8 +1701,21 @@
         {
           "type": "REPEAT",
           "content": {
-            "type": "SYMBOL",
-            "name": "declaration_with_attrs"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "PREC",
+                "value": 1,
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "verus_block"
+                }
+              },
+              {
+                "type": "SYMBOL",
+                "name": "declaration_with_attrs"
+              }
+            ]
           }
         },
         {
