@@ -50,6 +50,6 @@ jobs:
           test-go: true
           test-swift: true
       - name: Parse examples
-        uses: tree-sitter/parse-action@v4
+        uses: tree-sitter/parse-action@v5
         with:
           files: examples/**/*.rs
